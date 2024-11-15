@@ -2,6 +2,9 @@ const { Client, GatewayIntentBits } = require("discord.js");
 require('dotenv').config();
 const{handleGenerateShortURL,handleGetRedirectURL}=require('./controllers/url.js')
 
+const express = require("express");
+const { handleGetRedirectURL } = require("./controllers/url.js");
+
 const { connectMongoDB } = require("./connect.js");
 const client = new Client({
   intents: [
@@ -17,6 +20,30 @@ connectMongoDB("mongodb://127.0.0.1:27017/discord-bot").then(() =>
   console.log("MongoDB ConnectEd")
 );
 
+//express redirecter
+const app = express();
+const PORT = 3000;
+
+// Redirect route
+app.get("/:shortID", async (req, res) => {
+  const shortID = req.params.shortID;
+  try {
+    const originalURL = await handleGetRedirectURL(shortID);
+    if (originalURL) {
+      res.redirect(originalURL);
+    } else {
+      res.status(404).send("Short URL not found.");
+    }
+  } catch (err) {
+    res.status(500).send("An error occurred.");
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running at http://localhost:${PORT}`);
+});
+
+
 
 client.on("messageCreate", async(message) => {
   if (message.author.bot) return;
@@ -25,11 +52,11 @@ client.on("messageCreate", async(message) => {
   if (message.content.startsWith("create")) {
     const url = message.content.split("create")[1].trim();
     message.reply({
-      content: "Generating shortid for " + url,
+      content: "Generating short url for " + url,
     });
     const shortURLid = await handleGenerateShortURL(url);
     message.reply({
-      content: "Shortid created: " + shortURLid,
+      content: "Short URL created: " + shortURLid,
     });
   }
 
@@ -51,3 +78,5 @@ client.on("interactionCreate", (interaction) => {
 
 const token = process.env.DISCORD_TOKEN;
 client.login(token);
+
+

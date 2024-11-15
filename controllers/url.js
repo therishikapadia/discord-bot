@@ -9,7 +9,7 @@ async function handleGenerateShortURL(redirectUrl) {
       redirectURL: redirectUrl,
     });
     console.log("shorturl created");
-    return shortID;
+    return `http://localhost:3000/${shortID}`;
   }
 
 async function handleGetRedirectURL(shortID) {
